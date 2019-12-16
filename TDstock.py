@@ -7,8 +7,8 @@ import api_access
 
 #File contains methods for parsing tweets
 
-#searches tweet for a Stock ticker, takes in pre-loaded json data and output file to write to
-def search_tweet(output, data):
+#searches tweet for a Stock ticker, takes in pre-loaded json data
+def search_tweet(data):
     
     result = "couldn't find ticker\n"
     upperwords = []
@@ -31,7 +31,7 @@ def search_tweet(output, data):
         #lowercase ticker names uncommon and poor practice, will not consider them.
         elif(word.isupper()):
             if(word.isalpha()):
-                if(word != "RT"):
+                if((word != "RT") & (word != "USMCA")):
                     result = word
 
             #checking if everything after first char is alphabetical
@@ -41,12 +41,12 @@ def search_tweet(output, data):
             #checking if deduction of first and last char is alphabetical
             elif(word[1:-1].isalpha()):
                 result = word[1:-1]
-    #if result is beginning error message it prints error to terminal, length of seven is too long to be any valid ticker
-    if (len(result) > 7):
+    #if result is beginning error message it prints error to terminal, length of six is too long to be any valid ticker
+    if (len(result) > 6):
         print(result)
     else:
 
-        
+        output = open("output/" + result + "info.txt", "a")
         get_time_info(1,result, output)
 
 def get_stock_info(ticker, output):

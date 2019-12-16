@@ -7,6 +7,7 @@ from tweepy import Stream
 import json
 import api_access
 import TDstock
+import threading
 
 
 class TwitterClient():
@@ -89,10 +90,9 @@ class TwitterListener(StreamListener):
     #will take in data from StreamListener and we can deal with it however we want
     def on_data(self, data):
         try:
-            with open(self.tweetsFile, 'a') as tf:
-                json_data = json.loads(data)
-                
-                TDstock.search_tweet(tf, json_data)
+            json_data = json.loads(data)
+            t = threading.Thread(target=TDstock.search_tweet, args=(json_data,))
+            t.start()
             return(True)
         except BaseException as e:
             print("Error on data: " + str(e))
@@ -110,7 +110,7 @@ class TwitterListener(StreamListener):
 #main method
 if __name__ == '__main__':
     
-    keywords = ['Apple']
+    keywords = ['stocks']
     file = "tweetsFile.json"
     users = []
 
