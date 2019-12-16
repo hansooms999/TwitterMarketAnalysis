@@ -11,8 +11,10 @@ import TDstock
 
 class TwitterClient():
     def __init__(self,user=None):
+
         #variable created to pass credentials to OAuthHandler to handle authentication
         auth = OAuthHandler(api_access.consumer_key, api_access.consumer_secret)
+
         #finishes authentication
         auth.set_access_token(api_access.access_token, api_access.access_token_secret)
 
@@ -61,7 +63,7 @@ class TwitterStreamer():
         else:
             stream.userstream(_with="following")
 
-    def stream_user_tweets(self,tweetsFile, users):
+    def stream_user_tweets(self, tweetsFile, users):
         
         #listener object
         listener = TwitterListener(tweetsFile)
@@ -89,7 +91,8 @@ class TwitterListener(StreamListener):
         try:
             with open(self.tweetsFile, 'a') as tf:
                 json_data = json.loads(data)
-                print(json_data)
+                
+                TDstock.search_tweet(tf, json_data)
             return(True)
         except BaseException as e:
             print("Error on data: " + str(e))
@@ -98,7 +101,7 @@ class TwitterListener(StreamListener):
     #what happens when an error occurs
     def on_error(self, status):
         
-	#nice
+	    #nice
         if status == 420:
             print("Rates Limit has been exceeded")
             return(False)

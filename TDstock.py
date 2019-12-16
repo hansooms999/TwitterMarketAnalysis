@@ -7,53 +7,65 @@ import api_access
 
 #File contains methods for parsing tweets
 
-def search_tweet(data):
+#searches tweet for a Stock ticker, takes in pre-loaded json data and output file to write to
+def search_tweet(output, data):
     
-    result = "couldn't find ticker"
+    result = "couldn't find ticker\n"
     upperwords = []
+
+    #grabs data from tweet's text field and splits into a list, text seperated by whitespace
     words = data['text'].split()
+
     for word in words:
         # useful criteria = word.isupper() & (word[0] != '#') & (word != 'RT') & (word!='CEO') & (word!='AI')
         
-        #  to determine any upper case tickers that may be missing
-        
+        #common notation to precede tickers in tweets with cash tag
         if ((word[0] == '$')):
-            print(word)
             if (word[1:].isalpha()):
                 result = word[1:]
-            
-            elif (word[1:len(word)-2].isalpha()):
-                result = word[1:len(word)-1]
+
+            #TODO: what case is this covering??
+            elif (word[1:-2].isalpha()):
+                result = word[1:-1]
+
+        #lowercase ticker names uncommon and poor practice, will not consider them.
         elif(word.isupper()):
             if(word.isalpha()):
-                result = word
+                if(word != "RT"):
+                    result = word
+
+            #checking if everything after first char is alphabetical
             elif(word[1:].isalpha()):
                 result = word[1:]
-            elif(word[1:len(word)-1]):
-                result = word[1:len(word)-1]
+
+            #checking if deduction of first and last char is alphabetical
+            elif(word[1:-1].isalpha()):
+                result = word[1:-1]
+    #if result is beginning error message it prints error to terminal, length of seven is too long to be any valid ticker
     if (len(result) > 7):
         print(result)
-        print(upperwords)
     else:
-        
-        get_time_info(20,result)
 
-def get_stock_info(ticker):
+        
+        get_time_info(1,result, output)
+
+def get_stock_info(ticker, output):
     cont = True
+    print("got inside get_stock_info\n")
     try:
-        r = requests.get('https://api.tdameritrade.com/v1/marketdata/quotes?apikey='+ TD_api_key +'symbol=' + ticker)
+        r = requests.get('https://api.tdameritrade.com/v1/marketdata/' + ticker + '/quotes?apikey=' + api_access.TD_api_key)
         current_data = json.loads(r.text)
     except BaseException as e:
-        print(ticker + " is not a valid ticker")
+        output.write(ticker + " is not a valid ticker" + "\n")
         cont=False
     if (cont == True):
         
         #if keyword found in tweet is valid ticker, prints ticker info to terminal
         time = datetime.datetime.now()
-        print("\nTime- " + str(time.hour) + ":" + str(time.minute) + "::" + str(time.second))
-        print("Symbol: " + ticker)
-        print("Bid: " + str(current_data[ticker]['bidPrice']) + "   Ask: " + str(current_data[ticker]['askPrice']))
-        print("Size: " + str(current_data[ticker]['bidSize']) + "      " + str(current_data[ticker]['askSize']) + "\n")
+        output.write("Time- " + str(time.hour) + ":" + str(time.minute) + "::" + str(time.second) + "\n")
+        output.write("Symbol: " + ticker +  "\n")
+        output.write("Bid: " + str(current_data[ticker]['bidPrice']) + "   Ask: " + str(current_data[ticker]['askPrice']) + "\n")
+        output.write("Size: " + str(current_data[ticker]['bidSize']) + "      " + str(current_data[ticker]['askSize']) + "\n\n")
 
 #TODO: printing to file instead of terminal
 #TODO: get average daily volume data and compare to current days volume
@@ -61,9 +73,9 @@ def get_stock_info(ticker):
 
     #useful things timedelta, delta.total_seconds()
 
-def get_time_info(period,ticker):
-    get_stock_info(ticker)
+def get_time_info(period,ticker,output):
+    get_stock_info(ticker, output)
     time.sleep(period)
-    print(ticker + ": " + str(period) + " seconds later")
-    get_stock_info(ticker)
+    output.write(ticker + " :: " + str(period) + " seconds later" + "\n")
+    get_stock_info(ticker, output)
 
