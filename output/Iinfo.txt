@@ -1,0 +1,4 @@
+Time- 17:29::37
+Symbol: I
+Bid: 6.01   Ask: 6.05
+Size: 400      200

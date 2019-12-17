@@ -1,0 +1,9 @@
+Time- 17:30::15
+Symbol: DAX
+Bid: 25.9   Ask: 28.5
+Size: 100      0
+DAX :: 20 seconds later
+Time- 17:30::35
+Symbol: DAX
+Bid: 25.9   Ask: 28.5
+Size: 100      0

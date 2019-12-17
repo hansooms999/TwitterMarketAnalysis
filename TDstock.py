@@ -4,6 +4,10 @@ import json
 import datetime
 import time
 import api_access
+import re
+
+MAX_TICKER_LENGTH = 5
+TIME_INTERVAL_SECONDS = 20
 
 #File contains methods for parsing tweets
 
@@ -13,6 +17,7 @@ def search_tweet(data):
     result = "couldn't find ticker\n"
     upperwords = []
 
+    #TODO:: change to REGEX
     #grabs data from tweet's text field and splits into a list, text seperated by whitespace
     words = data['text'].split()
 
@@ -24,14 +29,14 @@ def search_tweet(data):
             if (word[1:].isalpha()):
                 result = word[1:]
 
-            #TODO: what case is this covering??
+            #covering multiple punctuation marks at end TODO:: make this better
             elif (word[1:-2].isalpha()):
                 result = word[1:-1]
 
         #lowercase ticker names uncommon and poor practice, will not consider them.
         elif(word.isupper()):
             if(word.isalpha()):
-                if((word != "RT") & (word != "USMCA")):
+                if((word != "RT") & (word != "CEO") & (word != "AI")):
                     result = word
 
             #checking if everything after first char is alphabetical
@@ -41,41 +46,52 @@ def search_tweet(data):
             #checking if deduction of first and last char is alphabetical
             elif(word[1:-1].isalpha()):
                 result = word[1:-1]
-    #if result is beginning error message it prints error to terminal, length of six is too long to be any valid ticker
-    if (len(result) > 6):
+    #if result is beginning error message it prints error to terminal
+    if (len(result) > MAX_TICKER_LENGTH):
         print(result)
     else:
 
         output = open("output/" + result + "info.txt", "a")
-        get_time_info(1,result, output)
+        get_time_info(result, output)
 
 def get_stock_info(ticker, output):
     cont = True
     print("got inside get_stock_info\n")
     try:
-        r = requests.get('https://api.tdameritrade.com/v1/marketdata/' + ticker + '/quotes?apikey=' + api_access.TD_api_key)
-        current_data = json.loads(r.text)
-    except BaseException as e:
-        output.write(ticker + " is not a valid ticker" + "\n")
-        cont=False
-    if (cont == True):
+        quote = requests.get('https://api.tdameritrade.com/v1/marketdata/' + ticker + '/quotes?apikey=' + api_access.TD_api_key)
         
+    except BaseException as e:
+        output.write("Could not access Quote for:: " + ticker + "\n")
+        cont=False
+    
+    try:
+        fund = requests.get('https://api.tdameritrade.com/v1/instruments?apikey=' + api_access.api_key + '&symbol=' + ticker + '&projection=fundamental')
+        
+    except BaseException as e:
+        output.write("Could not access Fundamentals for:: " + ticker + "\n")
+        cont=False
+
+    if (cont == True):
+
+        quote_data = json.loads(quote.text)
+        fund_data = json.loads(fund.text)
         #if keyword found in tweet is valid ticker, prints ticker info to terminal
         time = datetime.datetime.now()
         output.write("Time- " + str(time.hour) + ":" + str(time.minute) + "::" + str(time.second) + "\n")
         output.write("Symbol: " + ticker +  "\n")
-        output.write("Bid: " + str(current_data[ticker]['bidPrice']) + "   Ask: " + str(current_data[ticker]['askPrice']) + "\n")
-        output.write("Size: " + str(current_data[ticker]['bidSize']) + "      " + str(current_data[ticker]['askSize']) + "\n\n")
+        output.write("Bid: " + str(quote_data[ticker]['bidPrice']) + "   Ask: " + str(quote_data[ticker]['askPrice']) + "\n")
+        output.write("Size: " + str(quote_data[ticker]['bidSize']) + "      " + str(quote_data[ticker]['askSize']) + "\n")
+        output.write("Average Vol (10-Day): " + str(fund_data[ticker]["vol10DayAvg"]) + "\n\n")
 
-#TODO: printing to file instead of terminal
 #TODO: get average daily volume data and compare to current days volume
 #TODO: Analyze daily SMA trendline change
 
-    #useful things timedelta, delta.total_seconds()
 
-def get_time_info(period,ticker,output):
+def get_time_info(ticker,output):
     get_stock_info(ticker, output)
-    time.sleep(period)
+    time.sleep(TIME_INTERVAL_SECONDS)
     output.write(ticker + " :: " + str(period) + " seconds later" + "\n")
     get_stock_info(ticker, output)
 
+    #close output file and thread terminates
+    output.close()
