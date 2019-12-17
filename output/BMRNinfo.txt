@@ -1,9 +1,0 @@
-Time- 17:30::6
-Symbol: BMRN
-Bid: 82.0   Ask: 83.5
-Size: 200      1000
-BMRN :: 20 seconds later
-Time- 17:30::26
-Symbol: BMRN
-Bid: 82.0   Ask: 83.5
-Size: 200      1000

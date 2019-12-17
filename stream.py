@@ -8,6 +8,7 @@ import json
 import api_access
 import TDstock
 import threading
+import time
 
 
 class TwitterClient():
@@ -83,17 +84,24 @@ class TwitterStreamer():
 #This is a basic listener that just prints received tweets to Twitter output. Inherits from StreamListener Class.
 class TwitterListener(StreamListener):
     
-    def __init__(self,tweetsFile):
+    def __init__(self,tweetsFile, time_limit = 30):
+        self.start_time = time.time()
+        self.limit = time_limit
         self.tweetsFile = tweetsFile
+        
     
     #Overriding on_data and on_error method from StreamListener class
     #will take in data from StreamListener and we can deal with it however we want
     def on_data(self, data):
         try:
-            json_data = json.loads(data)
-            t = threading.Thread(target=TDstock.search_tweet, args=(json_data,))
-            t.start()
-            return(True)
+            #stream will end after time limit is reached
+            if((time.time() - self.start_time) < self.limit ):
+                json_data = json.loads(data)
+                t = threading.Thread(target=TDstock.search_tweet, args=(json_data,))
+                t.start()
+                return(True)
+            else:
+                return(False)
         except BaseException as e:
             print("Error on data: " + str(e))
             return(True)
@@ -116,6 +124,3 @@ if __name__ == '__main__':
 
     twitterStreamer = TwitterStreamer()
     twitterStreamer.stream_tweets(file,keywords,users)
-
-
-
